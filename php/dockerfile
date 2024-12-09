@@ -1,0 +1,30 @@
+FROM php:8.2-apache
+
+# SSL 및 기본 확장 설치
+RUN apt-get update && apt-get install -y \
+    librdkafka-dev \
+    git \
+    unzip \
+    libssl-dev \
+    pkg-config \
+    && pecl install rdkafka \
+    && docker-php-ext-enable rdkafka \
+    && docker-php-ext-install sockets \
+    && pecl install mongodb \
+    && docker-php-ext-enable mongodb
+
+# Composer 설치
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# 작업 디렉토리 설정
+WORKDIR /var/www/html
+
+# 소스 복사
+COPY . /var/www/html/
+
+# Composer 패키지 설치
+RUN composer install --no-dev --optimize-autoloader && \
+    composer dump-autoload -o
+
+# Apache 설정
+RUN a2enmod rewrite
