@@ -83,7 +83,7 @@ services:
    ports:
      - "5173:5173"
    environment:
-     - VITE_API_URL=http://10.178.0.2:8083
+     - VITE_API_URL=http://34.64.132.7:8083
    depends_on:
      - php-web
    networks:
