@@ -4,13 +4,11 @@ namespace App\Collectors;
 
 use GuzzleHttp\Client;
 use App\Kafka\MetricProducer;
-use App\DB\MetricStorage;
 
 class DockerCollector
 {
    private $client;
    private $producer;
-   private $storage;
    private $baseUrl;
 
    public function __construct()
@@ -23,7 +21,6 @@ class DockerCollector
            ]
        ]);
        $this->producer = new MetricProducer();
-       $this->storage = new MetricStorage();
    }
 
    public function collect()
@@ -31,11 +28,8 @@ class DockerCollector
        try {
            $metrics = $this->collectMetrics();
            
-           // Kafka로 전송
+           // Kafka로만 전송
            $this->producer->send($metrics);
-           
-           // MongoDB에 저장
-           $this->storage->store($metrics);
            
            return true;
        } catch (\Exception $e) {
@@ -75,18 +69,18 @@ class DockerCollector
    }
 
    private function getContainers()
-{
-    $response = $this->client->get('/containers/json');
-    $containers = json_decode($response->getBody(), true);
-    
-    // monitoring- 접두어를 가진 컨테이너 제외하고 필터링
-    $filteredContainers = array_filter($containers, function($container) {
-        $name = ltrim($container['Names'][0], '/');
-        return !str_starts_with($name, 'monitoring-');
-    });
-    
-    return array_values($filteredContainers);
-}
+   {
+       $response = $this->client->get('/containers/json');
+       $containers = json_decode($response->getBody(), true);
+       
+       // monitoring- 접두어를 가진 컨테이너 제외하고 필터링
+       $filteredContainers = array_filter($containers, function($container) {
+           $name = ltrim($container['Names'][0], '/');
+           return !str_starts_with($name, 'monitoring-');
+       });
+       
+       return array_values($filteredContainers);
+   }
 
    private function getContainerStats($containerId)
    {
@@ -104,9 +98,7 @@ class DockerCollector
            $cpuCount = $stats['cpu_stats']['online_cpus'] ?? 1;
 
            if ($systemDelta > 0 && $cpuCount > 0) {
-               // CPU 사용량을 전체 시스템 사용량 대비 비율로 계산
                $cpuPercent = ($cpuDelta / $systemDelta) * $cpuCount * 100;
-               // 각 코어당 100%를 넘지 않도록 제한
                $cpuPercent = min($cpuPercent, $cpuCount * 100.0);
                
                return [
@@ -137,7 +129,6 @@ class DockerCollector
            
            $actualUsage = $memoryUsage - $memoryCache;
            $percentage = ($actualUsage / $memoryLimit) * 100;
-           // 100%를 넘지 않도록 제한
            $percentage = min($percentage, 100.0);
            
            return [

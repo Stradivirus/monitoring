@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
  kafka:
    image: confluentinc/cp-kafka:latest
@@ -70,6 +68,25 @@ services:
      sh -c "composer install --no-dev --optimize-autoloader &&
             chmod 666 /var/run/docker.sock &&
             php src/collect.php"
+   restart: unless-stopped
+
+ consumer:
+   build:
+     context: ./php
+     dockerfile: Dockerfile
+   container_name: monitoring-consumer
+   volumes:
+     - ./php:/var/www/html
+   environment:
+     MONGODB_URI: "mongodb+srv://stradivirus:1q2w3e4r@cluster0.e7rvfpz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+     KAFKA_BROKER: "kafka:9092"
+     PHP_INI_MEMORY_LIMIT: "512M"
+   depends_on:
+     kafka:
+       condition: service_healthy
+   command: >
+     sh -c "composer install --no-dev --optimize-autoloader &&
+            php src/consume.php"
    restart: unless-stopped
 
  frontend:
