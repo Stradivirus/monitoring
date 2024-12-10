@@ -32,6 +32,7 @@ services:
    container_name: monitoring-php
    volumes:
      - ./php:/var/www/html
+     - ./php/apache.conf:/etc/apache2/sites-available/000-default.conf
      - /var/run/docker.sock:/var/run/docker.sock
    ports:
      - "8083:80"
@@ -46,7 +47,6 @@ services:
    command: >
      sh -c "composer install --no-dev --optimize-autoloader &&
             chmod 666 /var/run/docker.sock &&
-            sed -i 's#DocumentRoot /var/www/html#DocumentRoot /var/www/html/src/api#' /etc/apache2/sites-available/000-default.conf &&
             apache2-foreground"
    restart: unless-stopped
 
