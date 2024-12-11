@@ -16,20 +16,10 @@ class MetricsController {
     }
     
     public function streamMetrics() {
-        // CORS 헤더 추가
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type');
-        
-        // SSE 헤더
+        // SSE 헤더만 설정
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
         header('Connection: keep-alive');
-        
-        // OPTIONS 요청 처리
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            exit(0);
-        }
         
         while (true) {
             $message = $this->kafkaConsumer->consume(1000);
