@@ -21,6 +21,11 @@ switch (true) {
         $_GET['metric_type'] = $matches[1];
         require __DIR__ . '/metrics.php';
         break;
+
+    case preg_match('/^\/api\/stream\/metrics$/', $request):
+        $controller = new \App\Controllers\MetricsController();
+        $controller->streamMetrics();
+        break;
     
     default:
         http_response_code(404);

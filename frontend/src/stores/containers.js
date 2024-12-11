@@ -7,13 +7,12 @@ export const useContainerStore = defineStore('containers', {
     selectedContainer: null,
     loading: false,
     error: null,
-    refreshInterval: null,
+    eventSource: null,
     isAutoRefresh: true,
     lastUpdated: null
   }),
 
   getters: {
-    // 네트워크별로 컨테이너 그룹화
     networkGroups: (state) => {
       const groups = {}
       
@@ -47,7 +46,6 @@ export const useContainerStore = defineStore('containers', {
       return groups
     },
 
-    // 전체 시스템 상태
     systemStats: (state) => {
       return {
         totalContainers: state.containers.length,
@@ -75,28 +73,58 @@ export const useContainerStore = defineStore('containers', {
       }
     },
 
-    startAutoRefresh() {
-      if (!this.refreshInterval) {
+    startEventStream() {
+      if (!this.eventSource) {
         this.isAutoRefresh = true
-        this.refreshInterval = setInterval(() => {
-          this.fetchContainers()
-        }, 10000) // 10초마다 갱신
+        this.eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/stream/metrics`)
+        
+        this.eventSource.onmessage = (event) => {
+          const data = JSON.parse(event.data)
+          this.updateContainer(data)
+          this.lastUpdated = new Date()
+        }
+
+        this.eventSource.onerror = (error) => {
+          console.error('EventSource failed:', error)
+          this.eventSource.close()
+          this.eventSource = null
+          this.error = 'Connection lost. Retrying...'
+          
+          // 3초 후 재연결 시도
+          setTimeout(() => this.startEventStream(), 3000)
+        }
       }
     },
 
-    stopAutoRefresh() {
-      if (this.refreshInterval) {
+    updateContainer(newData) {
+      const index = this.containers.findIndex(c => c.container_id === newData.container_id)
+      if (index !== -1) {
+        // 기존 컨테이너 업데이트
+        const updatedContainer = {
+          ...this.containers[index],
+          metrics: newData.metrics,
+          status: newData.status
+        }
+        this.containers.splice(index, 1, updatedContainer)
+      } else {
+        // 새 컨테이너 추가
+        this.containers.push(newData)
+      }
+    },
+
+    stopEventStream() {
+      if (this.eventSource) {
         this.isAutoRefresh = false
-        clearInterval(this.refreshInterval)
-        this.refreshInterval = null
+        this.eventSource.close()
+        this.eventSource = null
       }
     },
 
     toggleAutoRefresh() {
       if (this.isAutoRefresh) {
-        this.stopAutoRefresh()
+        this.stopEventStream()
       } else {
-        this.startAutoRefresh()
+        this.startEventStream()
       }
     },
 
@@ -104,15 +132,13 @@ export const useContainerStore = defineStore('containers', {
       this.selectedContainer = container
     },
 
-    // 컴포넌트 마운트 시 자동으로 시작
     initializeStore() {
       this.fetchContainers()
-      this.startAutoRefresh()
+      this.startEventStream()
     },
 
-    // 컴포넌트 언마운트 시 정리
     clearStore() {
-      this.stopAutoRefresh()
+      this.stopEventStream()
       this.containers = []
       this.selectedContainer = null
       this.error = null
