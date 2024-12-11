@@ -1,12 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-100">
-    <!-- Header -->
-    <header class="bg-white shadow">
-      <div class="w-full px-4 py-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl font-bold text-gray-900">Monitoring</h1>
-      </div>
-    </header>
-
     <!-- Main Content -->
     <main>
       <!-- Ensure Full Width -->

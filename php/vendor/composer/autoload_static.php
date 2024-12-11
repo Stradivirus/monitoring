@@ -156,6 +156,7 @@ class ComposerStaticInita91a326b3b55f8f2e801666f5fbf8464
         'App\\Collectors\\DockerCollector' => __DIR__ . '/../..' . '/src/App/Collectors/DockerCollector.php',
         'App\\Collectors\\MetricScheduler' => __DIR__ . '/../..' . '/src/App/Collectors/MetricScheduler.php',
         'App\\DB\\MetricStorage' => __DIR__ . '/../..' . '/src/App/DB/MetricStorage.php',
+        'App\\Kafka\\MetricConsumer' => __DIR__ . '/../..' . '/src/App/Kafka/MetricConsumer.php',
         'App\\Kafka\\MetricProducer' => __DIR__ . '/../..' . '/src/App/Kafka/MetricProducer.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'CURLStringFile' => __DIR__ . '/..' . '/symfony/polyfill-php81/Resources/stubs/CURLStringFile.php',

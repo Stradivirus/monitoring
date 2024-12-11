@@ -9,6 +9,7 @@ return array(
     'App\\Collectors\\DockerCollector' => $baseDir . '/src/App/Collectors/DockerCollector.php',
     'App\\Collectors\\MetricScheduler' => $baseDir . '/src/App/Collectors/MetricScheduler.php',
     'App\\DB\\MetricStorage' => $baseDir . '/src/App/DB/MetricStorage.php',
+    'App\\Kafka\\MetricConsumer' => $baseDir . '/src/App/Kafka/MetricConsumer.php',
     'App\\Kafka\\MetricProducer' => $baseDir . '/src/App/Kafka/MetricProducer.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'CURLStringFile' => $vendorDir . '/symfony/polyfill-php81/Resources/stubs/CURLStringFile.php',
