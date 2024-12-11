@@ -26,5 +26,5 @@ COPY . /var/www/html/
 RUN composer install --no-dev --optimize-autoloader && \
     composer dump-autoload -o
 
-# Apache 설정
-RUN a2enmod rewrite
+# Apache 모듈 활성화
+RUN a2enmod rewrite headers
