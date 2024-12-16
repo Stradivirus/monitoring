@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContainerStore } from '@/stores/containers'
 import NetworkGroup from '../networks/NetworkGroup.vue'
@@ -82,23 +82,18 @@ const {
 } = storeToRefs(containerStore)
 
 const showScrollTop = ref(false)
-const scrollThreshold = ref(300)
+const scrollThreshold = 300
+const refreshInterval = ref(null)
 
-// 스크롤 위치에 따른 버튼 표시 여부 최적화
-const handleScroll = () => {
-  showScrollTop.value = window.scrollY > scrollThreshold.value
-}
-
-// 디바운스된 스크롤 핸들러
-const debouncedScroll = () => {
+const debouncedScroll = (() => {
   let timeout
   return () => {
-    if (timeout) {
-      clearTimeout(timeout)
-    }
-    timeout = setTimeout(handleScroll, 100)
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      showScrollTop.value = window.scrollY > scrollThreshold
+    }, 100)
   }
-}
+})()
 
 function formatDate(date) {
   if (!date) return ''
@@ -107,6 +102,11 @@ function formatDate(date) {
 
 function toggleAutoRefresh() {
   containerStore.toggleAutoRefresh()
+  if (containerStore.isAutoRefresh) {
+    startRefreshInterval()
+  } else {
+    stopRefreshInterval()
+  }
 }
 
 function selectContainer(container) {
@@ -120,14 +120,34 @@ function scrollToTop() {
   })
 }
 
+function startRefreshInterval() {
+  stopRefreshInterval() // 기존 인터벌 제거
+  refreshInterval.value = setInterval(() => {
+    if (containerStore.isAutoRefresh && !loading.value) {
+      containerStore.fetchContainers()
+    }
+  }, 60000) // 1분 간격으로 변경
+}
+
+function stopRefreshInterval() {
+  if (refreshInterval.value) {
+    clearInterval(refreshInterval.value)
+    refreshInterval.value = null
+  }
+}
+
 onMounted(() => {
   containerStore.initializeStore()
-  window.addEventListener('scroll', debouncedScroll())
+  window.addEventListener('scroll', debouncedScroll)
+  if (containerStore.isAutoRefresh) {
+    startRefreshInterval()
+  }
 })
 
 onUnmounted(() => {
   containerStore.clearStore()
-  window.removeEventListener('scroll', debouncedScroll())
+  window.removeEventListener('scroll', debouncedScroll)
+  stopRefreshInterval()
 })
 </script>
 

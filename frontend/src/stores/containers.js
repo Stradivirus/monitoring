@@ -9,7 +9,9 @@ export const useContainerStore = defineStore('containers', {
     error: null,
     eventSource: null,
     isAutoRefresh: true,
-    lastUpdated: null
+    lastUpdated: null,
+    reconnectAttempts: 0,
+    maxReconnectAttempts: 5
   }),
 
   getters: {
@@ -65,6 +67,7 @@ export const useContainerStore = defineStore('containers', {
         this.containers = response.data
         this.lastUpdated = new Date()
         this.error = null
+        this.reconnectAttempts = 0
       } catch (error) {
         console.error('Error fetching containers:', error)
         this.error = error.message
@@ -83,16 +86,28 @@ export const useContainerStore = defineStore('containers', {
           console.log('Received SSE data:', event.data)
           try {
             const data = JSON.parse(event.data)
-            this.updateContainerMetrics(data)
+            
+            // 에러 체크
+            if (data.error) {
+              console.error('Server reported error:', data.message)
+              this.error = data.message
+              return
+            }
+
+            this.updateContainerData(data)
             this.lastUpdated = new Date()
+            this.error = null
+            this.reconnectAttempts = 0
           } catch (error) {
             console.error('Error processing SSE data:', error)
+            this.error = 'Error processing server data'
           }
         }
 
         this.eventSource.onopen = () => {
           console.log('EventSource connected')
           this.error = null
+          this.reconnectAttempts = 0
         }
 
         this.eventSource.onerror = (error) => {
@@ -101,23 +116,46 @@ export const useContainerStore = defineStore('containers', {
           this.eventSource = null
           this.error = 'Connection lost. Retrying...'
           
-          setTimeout(() => {
-            console.log('Attempting to reconnect...')
-            this.startEventStream()
-          }, 3000)
+          // 재연결 시도
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++
+            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
+            setTimeout(() => this.startEventStream(), 60000) // 1분 후 재시도
+          } else {
+            this.error = 'Connection lost. Please refresh the page.'
+            this.isAutoRefresh = false
+          }
         }
       }
     },
 
-    updateContainerMetrics(newData) {
+    updateContainerData(newData) {
       const index = this.containers.findIndex(c => c.container_id === newData.container_id)
+      
       if (index !== -1) {
-        // 메트릭 데이터만 업데이트
+        // 기존 컨테이너 업데이트
         const container = this.containers[index]
-        container.metrics = { ...newData.metrics }
+        
+        // metrics 객체 업데이트
+        container.metrics = {
+          cpu: { ...newData.metrics.cpu },
+          memory: { ...newData.metrics.memory },
+          network: { ...newData.metrics.network },
+          disk: { ...newData.metrics.disk }
+        }
+        
+        // 상태 변경이 있는 경우에만 업데이트
         if (newData.status !== container.status) {
           container.status = newData.status
         }
+
+        // 기타 필드 업데이트
+        container.name = newData.name
+        container.image = newData.image
+        container.labels = newData.labels
+      } else {
+        // 새 컨테이너 추가
+        this.containers.push(newData)
       }
     },
 
@@ -127,6 +165,7 @@ export const useContainerStore = defineStore('containers', {
         this.isAutoRefresh = false
         this.eventSource.close()
         this.eventSource = null
+        this.reconnectAttempts = 0
       }
     },
 
@@ -153,6 +192,7 @@ export const useContainerStore = defineStore('containers', {
       this.containers = []
       this.selectedContainer = null
       this.error = null
+      this.reconnectAttempts = 0
     }
   }
 })
