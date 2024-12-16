@@ -125,3 +125,71 @@
               <span>Write:</span>
               <span class="font-medium">{{ formatBytes(diskWrite) }}</span>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import AnimatedNumber from '../metrics/AnimatedNumber.vue'
+
+const props = defineProps({
+  container: {
+    type: Object,
+    required: true
+  }
+})
+
+const isRunning = computed(() => {
+  return props.container.status.toLowerCase() === 'running'
+})
+
+const cpuPercentage = computed(() => {
+  return props.container.metrics?.cpu?.percentage || 0
+})
+
+const memoryInMB = computed(() => {
+  const bytes = props.container.metrics?.memory?.used || 0
+  return Number((bytes / (1024 * 1024)).toFixed(2))
+})
+
+const maxMemoryMB = computed(() => {
+  const bytes = props.container.metrics?.memory?.total || 0
+  return bytes / (1024 * 1024)
+})
+
+const networkRx = computed(() => {
+  return props.container.metrics?.network?.total?.rx_bytes || 0
+})
+
+const networkTx = computed(() => {
+  return props.container.metrics?.network?.total?.tx_bytes || 0
+})
+
+const diskRead = computed(() => {
+  return props.container.metrics?.disk?.read_bytes || 0
+})
+
+const diskWrite = computed(() => {
+  return props.container.metrics?.disk?.write_bytes || 0
+})
+
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
+}
+</script>
+
+<style scoped>
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
