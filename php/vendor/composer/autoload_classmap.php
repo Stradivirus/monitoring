@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'App\\Collectors\\DockerCollector' => $baseDir . '/src/App/Collectors/DockerCollector.php',
     'App\\Collectors\\MetricScheduler' => $baseDir . '/src/App/Collectors/MetricScheduler.php',
+    'App\\Controllers\\MetricsController' => $baseDir . '/src/App/Controllers/MetricsController.php',
     'App\\DB\\MetricStorage' => $baseDir . '/src/App/DB/MetricStorage.php',
     'App\\Kafka\\MetricConsumer' => $baseDir . '/src/App/Kafka/MetricConsumer.php',
     'App\\Kafka\\MetricProducer' => $baseDir . '/src/App/Kafka/MetricProducer.php',

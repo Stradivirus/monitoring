@@ -155,6 +155,7 @@ class ComposerStaticInita91a326b3b55f8f2e801666f5fbf8464
     public static $classMap = array (
         'App\\Collectors\\DockerCollector' => __DIR__ . '/../..' . '/src/App/Collectors/DockerCollector.php',
         'App\\Collectors\\MetricScheduler' => __DIR__ . '/../..' . '/src/App/Collectors/MetricScheduler.php',
+        'App\\Controllers\\MetricsController' => __DIR__ . '/../..' . '/src/App/Controllers/MetricsController.php',
         'App\\DB\\MetricStorage' => __DIR__ . '/../..' . '/src/App/DB/MetricStorage.php',
         'App\\Kafka\\MetricConsumer' => __DIR__ . '/../..' . '/src/App/Kafka/MetricConsumer.php',
         'App\\Kafka\\MetricProducer' => __DIR__ . '/../..' . '/src/App/Kafka/MetricProducer.php',
